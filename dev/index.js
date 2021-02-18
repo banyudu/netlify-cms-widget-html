@@ -1,7 +1,7 @@
 import './bootstrap.js'
 import CMS, { init } from 'netlify-cms'
 import 'netlify-cms/dist/cms.css'
-import { Control, Preview } from '../src'
+import { HtmlControl, HtmlPreview } from '../src'
 
 const config = {
 backend: {
@@ -17,12 +17,12 @@ collections: [{
    name: 'test',
    label: 'Test',
    fields: [
-     { name: 'test_widget', label: 'Test Widget', widget: 'test'},
+     { name: 'html_widget', label: 'HTML Widget', widget: 'html'},
    ],
  }],
 }],
 }
 
-CMS.registerWidget('test', Control, Preview)
+CMS.registerWidget('html', HtmlControl, HtmlPreview)
 
 init({ config })

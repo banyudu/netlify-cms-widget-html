@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
- import React from 'react';
+import React from 'react';
 
  export default class Control extends React.Component {
    static propTypes = {
@@ -23,7 +23,7 @@ import PropTypes from 'prop-types';
 
      return (
        <textarea
-         type="text"
+         rows={20}
          id={forID}
          className={classNameWrapper}
          value={value || ''}

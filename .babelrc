@@ -1,11 +1,12 @@
 {
   "presets": [
-    "react",
-    "env"
+    "@babel/preset-react",
+    "@babel/preset-env"
   ],
   "plugins": [
-    "transform-export-extensions",
-    "transform-class-properties",
-    "transform-object-rest-spread"
+    "@babel/plugin-proposal-export-default-from",
+    "@babel/plugin-proposal-export-namespace-from",
+    "@babel/plugin-proposal-class-properties",
+    "@babel/plugin-proposal-object-rest-spread"
   ]
 }

@@ -2,8 +2,8 @@ import Control from './Control'
 import Preview from './Preview'
 
 if (typeof window !== 'undefined') {
-  window.Control = Control
-  window.Preview = Preview
+  window.HtmlControl = Control
+  window.HtmlPreview = Preview
 }
 
-export { Control, Preview }
+export { Control as HtmlControl, Preview as HtmlPreview }
