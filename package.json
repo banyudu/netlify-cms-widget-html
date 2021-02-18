@@ -1,0 +1,53 @@
+{
+  "name": "netlify-cms-widget-html",
+  "version": "0.0.1",
+  "description": "Plain html editor for netlify-cms",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack-serve --port 9000 --static public --open",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/banyudu/netlify-cms-widget-html.git"
+  },
+  "keywords": [
+    "cms",
+    "netlify",
+    "widget",
+    "netlify-cms",
+    "netlify-cms-widget",
+    "html"
+  ],
+  "author": "Yudu Ban <banyudu@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/banyudu/netlify-cms-widget-html/issues"
+  },
+  "homepage": "https://github.com/banyudu/netlify-cms-widget-html#readme",
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.5",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-export-extensions": "^6.22.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-react": "^6.24.1",
+    "cross-env": "^7.0.3",
+    "css-loader": "^5.0.2",
+    "html-webpack-plugin": "^5.1.0",
+    "netlify-cms": "^2.10.93",
+    "react": "^17.0.1",
+    "source-map-loader": "^2.0.1",
+    "style-loader": "^2.0.0",
+    "webpack": "^5.22.0",
+    "webpack-cli": "^4.5.0",
+    "webpack-serve": "^3.2.0"
+  },
+  "dependencies": {
+    "prop-types": "^15.7.2"
+  },
+  "peerDependencies": {
+    "react": "^16"
+  }
+}
