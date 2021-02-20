@@ -17,7 +17,7 @@ collections: [{
    name: 'test',
    label: 'Test',
    fields: [
-     { name: 'html_widget', label: 'HTML Widget', widget: 'html'},
+     { name: 'html_widget', label: 'HTML Widget', widget: 'html', storeImages: true },
    ],
  }],
 }],

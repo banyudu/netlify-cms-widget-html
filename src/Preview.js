@@ -1,10 +1,13 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import DOMPurify from "dompurify";
 
-export default function Preview({ value }) {
-  return <div dangerouslySetInnerHTML={{ __html: value }} />
+const Preview = ({ value }) => {
+  return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(value) }} />
 }
 
 Preview.propTypes = {
   value: PropTypes.node,
 };
+
+export default Preview

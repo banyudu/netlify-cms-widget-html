@@ -1,34 +1,32 @@
-import PropTypes from 'prop-types';
-import React from 'react';
+import PropTypes from "prop-types";
+import React from "react";
 
- export default class Control extends React.Component {
-   static propTypes = {
-     onChange: PropTypes.func.isRequired,
-     forID: PropTypes.string,
-     value: PropTypes.node,
-     classNameWrapper: PropTypes.string.isRequired,
-   }
+const Control = ({ forID, value, onChange, classNameWrapper, field }) => {
+  const handleChange = (v) => {
+    // const shouldStoreImages = field.get("storeImages");
+    onChange(v)
+  };
 
-   static defaultProps = {
-     value: '',
-   }
+  return (
+    <textarea
+      rows={20}
+      id={forID}
+      className={classNameWrapper}
+      value={value || ""}
+      onChange={(e) => handleChange(e.target.value)}
+    />
+  );
+};
 
-   render() {
-     const {
-       forID,
-       value,
-       onChange,
-       classNameWrapper,
-     } = this.props;
+Control.propTypes = {
+  onChange: PropTypes.func.isRequired,
+  forID: PropTypes.string,
+  value: PropTypes.node,
+  classNameWrapper: PropTypes.string.isRequired,
+};
 
-     return (
-       <textarea
-         rows={20}
-         id={forID}
-         className={classNameWrapper}
-         value={value || ''}
-         onChange={e => onChange(e.target.value)}
-       />
-     );
-   }
- }
+Control.defaultProps = {
+  value: "",
+};
+
+export default Control;
