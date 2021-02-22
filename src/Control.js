@@ -1,39 +1,13 @@
 import PropTypes from "prop-types";
 import React from "react";
 import axios from 'axios'
-import memoizeOne from 'memoize-one'
-
-const parseHtml = memoizeOne(html => {
-  const dom = new window.DOMParser().parseFromString(html, 'text/html');
-  const imgMap = {} // url => img nodes
-  const cssMap = {} // url => nodes with background-image
-  const allUrls = new Set()
-
-  // parse all img tags
-  const imgTags = dom.getElementsByTagName('img')
-  for (const img of imgTags) {
-    allUrls.add(img.src)
-    imgMap[img.src] = imgMap[img.src] || []
-    imgMap[img.src].push(img)
-  }
-
-  // parse all nodes with background-image
-  const allNodes = dom.querySelectorAll('*', dom)
-  for (const node of allNodes) {
-    const backgroundImage = node.style.backgroundImage
-    if (/^url\(\"/.test(backgroundImage)) {
-      const url = backgroundImage.split('url("')[1].slice(0, -2)
-      allUrls.add(url)
-      cssMap[url] = cssMap[url] || []
-      cssMap[url].push(node)
-    }
-  }
-  return {
-    img: imgMap,
-    css: cssMap,
-    urls: Array.from(allUrls)
-  }
-})
+import { Base64 } from 'js-base64';
+import extName from 'ext-name'
+import debounce from 'debounce'
+import { createAssetProxy } from 'netlify-cms-core/dist/esm/valueObjects/AssetProxy'
+import { parseHtml, imageCache } from './utils'
+import { readAsDataURL } from 'promise-file-reader';
+// import { Buffer } from 'buffer'
 
 export default class Control extends React.Component {
   static propTypes = {
@@ -48,22 +22,102 @@ export default class Control extends React.Component {
   };
 
   state = {
-    // url => { localUrl: string, success: boolean }
-    images: {} // images pendnig to download and store
+    // url => { localUrl: string, success: boolean, promise: Promise }
+    images: {}, // images pendnig to download and store
   }
 
-  isValid = () => {
-    const { field, value } = this.props;
-    const { images } = this.state
+  async componentDidMount () {
+    if (this.shouldStoreImages()) {
+      this.storeImages()
+    }
+  }
+
+  remoteImageFilter = url => url.startsWith('http') || url.startsWith('//')
+
+  shouldStoreImages = () => {
+    const { field } = this.props;
     const shouldStoreImages = !!field.get('storeImages', false);
-    if (!shouldStoreImages) {
+    return shouldStoreImages
+  }
+
+  flush = debounce(() => {
+    const { value } = this.props;
+    const { images } = this.state
+    const { dom, urls, img, css } = parseHtml(value, this.remoteImageFilter)
+    for (const url of urls) {
+      if (images[url]?.success) {
+        const { localFilename } = images[url]
+        const newUrl = localFilename
+        img[url]?.forEach(node => node.src = newUrl)
+        css[url]?.forEach(node => node.style.backgroundImage = `url('${newUrl}')`)
+      }
+    }
+    const newValue = dom.body.innerHTML
+    if (newValue) {
+      this.save(newValue)
+    }
+  }, 200)
+
+  storeOneImage = async (url) => {
+    const { onAddAsset, config } = this.props
+    let res
+    try {
+      res = await axios.get(url, {
+        responseType: 'blob'
+        // responseType: 'arraybuffer'
+      })
+    } catch (error) {
+      console.error(error)
+      return
+    }
+    const mimeType = res.headers['content-type']
+    const ext = extName.mime(mimeType)?.[0]?.ext || 'raw'
+    const public_folder = config.get('public_folder') // => /assets
+    let localFilename = Base64.encodeURI(url) + `.${ext}`
+    localFilename = `${public_folder}/${localFilename}`
+    const imageFile = new File([new Blob([res.data])], localFilename, { type: mimeType })
+    onAddAsset(createAssetProxy({file: imageFile, path: localFilename }))
+    imageCache[localFilename] = await readAsDataURL(imageFile)
+
+    this.setState(state => {
+      const { images } = state
+      images[url] = images[url] || {}
+      images[url].success = true
+      images[url].localFilename = localFilename
+      return { images }
+    })
+  }
+
+  storeImages = debounce(async () => {
+    const { value } = this.props;
+    const { images } = this.state
+    const { urls } = parseHtml(value, this.remoteImageFilter)
+    const jobs = []
+    for (const url of urls) {
+      if (!images[url]?.promise) {
+        images[url] = {
+          promise: this.storeOneImage(url)
+        }
+        jobs.push(images[url].promise)
+      }
+    }
+    this.setState({ images })
+
+    // wait for all promises
+    await Promise.all(jobs)
+    this.flush()
+  }, 200)
+
+  isValid = () => {
+    if (!this.shouldStoreImages()) {
       return true
     }
+    const { value } = this.props;
+    const { images } = this.state
     // if need store images, validate if there's external images in html or styles
     // error 的格式是 { type: 'string', message: 'string' }
-    const { img, css, urls } = parseHtml(value)
+    const { urls } = parseHtml(value, this.remoteImageFilter)
     const pendingUrls = urls.filter(url => !images[url]?.success)
-    console.warn('pending urls: ', pendingUrls)
     return pendingUrls.length ? {
       error: {
         type: 'pending third party images',
@@ -72,8 +126,18 @@ export default class Control extends React.Component {
     } : true;
   };
 
+  handleChange = (value) => {
+    this.save(value)
+    this.storeImages()
+  }
+
+  save = (newValue) => {
+    const { onChange } = this.props
+    onChange(newValue)
+  }
+
   render() {
-    const { forID, value, onChange, classNameWrapper } = this.props;
+    const { forID, value, classNameWrapper } = this.props;
 
     return (
       <textarea
@@ -81,7 +145,7 @@ export default class Control extends React.Component {
         id={forID}
         className={classNameWrapper}
         value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => this.handleChange(e.target.value)}
       />
     );
   }
