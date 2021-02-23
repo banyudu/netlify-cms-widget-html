@@ -147,6 +147,7 @@ export default class Control extends React.Component {
         className={classNameWrapper}
         value={value || ""}
         onChange={(e) => this.handleChange(e.target.value)}
+        data-gramm_editor="false"
       />
     );
   }
