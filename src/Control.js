@@ -4,7 +4,7 @@ import axios from 'axios'
 import { Base64 } from 'js-base64';
 import extName from 'ext-name'
 import debounce from 'debounce'
-import { createAssetProxy } from 'netlify-cms-core/dist/esm/valueObjects/AssetProxy'
+// import { createAssetProxy } from 'netlify-cms-core/dist/esm/valueObjects/AssetProxy'
 import { parseHtml, imageCache } from './utils'
 import { readAsDataURL } from 'promise-file-reader';
 // import { Buffer } from 'buffer'
@@ -72,18 +72,19 @@ export default class Control extends React.Component {
     }
     const mimeType = res.headers['content-type']
     const ext = extName.mime(mimeType)?.[0]?.ext || 'raw'
-    const public_folder = config.get('public_folder') // => /assets
-    let localFilename = Base64.encodeURI(url) + `.${ext}`
-    localFilename = `${public_folder}/${localFilename}`
+    // const public_folder = config.get('public_folder') // => /assets
+    const localFilename = Base64.encodeURI(url) + `.${ext}`
     const imageFile = new File([new Blob([res.data])], localFilename, { type: mimeType })
-    onAddAsset(createAssetProxy({file: imageFile, path: localFilename }))
-    imageCache[localFilename] = await readAsDataURL(imageFile)
+    // onAddAsset(createAssetProxy({file: imageFile, path: localFilename }))
+    // const publicPath = `${public_folder}/${localFilename}`
+    const base64File = await readAsDataURL(imageFile)
+    // imageCache[publicPath] = base64File
 
     this.setState(state => {
       const { images } = state
       images[url] = images[url] || {}
       images[url].success = true
-      images[url].localFilename = localFilename
+      images[url].localFilename = base64File
       return { images }
     })
   }
