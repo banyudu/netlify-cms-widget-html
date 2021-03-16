@@ -8,6 +8,7 @@
     "start": "webpack-serve --port 9000 --static public --open",
     "build": "cross-env NODE_ENV=production webpack",
     "build:esm": "cross-env NODE_ENV=esm babel src --out-dir dist/esm --ignore \"**/__tests__\"",
+    "build:esm:watch": "cross-env NODE_ENV=esm babel src -w src --out-dir dist/esm --ignore \"**/__tests__\"",
     "prepublishOnly": "npm run build && npm run build:esm",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -60,10 +61,10 @@
     "axios": "^0.21.1",
     "buffer": "^6.0.3",
     "debounce": "^1.2.0",
-    "dompurify": "^2.2.6",
     "ext-name": "^5.0.0",
     "js-base64": "^3.6.0",
     "memoize-one": "^5.1.1",
+    "path": "^0.12.7",
     "promise-file-reader": "^1.0.3",
     "prop-types": "^15.7.2"
   },

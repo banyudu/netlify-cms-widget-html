@@ -4,10 +4,38 @@ import axios from 'axios'
 import { Base64 } from 'js-base64';
 import extName from 'ext-name'
 import debounce from 'debounce'
-// import { createAssetProxy } from 'netlify-cms-core/dist/esm/valueObjects/AssetProxy'
-import { parseHtml, imageCache } from './utils'
+import { parseHtml } from './utils'
 import { readAsDataURL } from 'promise-file-reader';
 // import { Buffer } from 'buffer'
+
+/**
+ * shorten string to max length of len
+ * @param {string} str
+ * @param {number} len
+ * @returns string
+ */
+const compress = (str, len) => {
+  if (str.length <= len || len <= 0) {
+    return str
+  }
+  const factor = str.length / len
+  const arr = []
+  for (let i = 0; i < str.length; i++) {
+    if ( (i + 1) / (arr.length + 1) >= factor) {
+      arr.push(str[i])
+    }
+  }
+  return arr.join('')
+}
+
+/**
+ * generate a unique filename by url and content
+ * @param {string} url full url
+ * @param {string} content base64 content
+ */
+const generateFilename = (url, content, suffix) => {
+  return (compress(url, 80) + '_' + Base64.encodeURI(compress(content, 10)) + suffix).toLowerCase()
+}
 
 export default class Control extends React.Component {
   static propTypes = {
@@ -59,7 +87,8 @@ export default class Control extends React.Component {
   }, 200)
 
   storeOneImage = async (url) => {
-    const { onAddAsset, config } = this.props
+    const { onAddAsset, config, onPersistMedia } = this.props
+    console.log('onPersistMedia is: ', onPersistMedia)
     let res
     try {
       res = await axios.get(url, {
@@ -72,19 +101,22 @@ export default class Control extends React.Component {
     }
     const mimeType = res.headers['content-type']
     const ext = extName.mime(mimeType)?.[0]?.ext || 'raw'
-    // const public_folder = config.get('public_folder') // => /assets
-    const localFilename = Base64.encodeURI(url) + `.${ext}`
-    const imageFile = new File([new Blob([res.data])], localFilename, { type: mimeType })
-    // onAddAsset(createAssetProxy({file: imageFile, path: localFilename }))
-    // const publicPath = `${public_folder}/${localFilename}`
-    const base64File = await readAsDataURL(imageFile)
-    // imageCache[publicPath] = base64File
+    console.log('config is: ', config)
+    const public_folder = config.public_folder || config.get('public_folder') // => /assets
+    // const localFilename = Base64.encodeURI(url) + `.${ext}`
+    const blob = new Blob([res.data])
+    const base64File = await readAsDataURL(blob)
+    const localFilename = generateFilename(Base64.encodeURI(url), base64File, `.${ext}`)
+    const imageFile = new File([blob], localFilename, { type: mimeType })
+    onPersistMedia?.(imageFile)
+    const publicPath = `${public_folder}/${localFilename}`
 
     this.setState(state => {
       const { images } = state
       images[url] = images[url] || {}
       images[url].success = true
-      images[url].localFilename = base64File
+      // images[url].localFilename = base64File
+      images[url].localFilename = publicPath
       return { images }
     })
   }
@@ -116,7 +148,6 @@ export default class Control extends React.Component {
     const { value } = this.props;
     const { images } = this.state
     // if need store images, validate if there's external images in html or styles
-    // error 的格式是 { type: 'string', message: 'string' }
     const { urls } = parseHtml(value, this.remoteImageFilter)
     const pendingUrls = urls.filter(url => !images[url]?.success)
     return pendingUrls.length ? {

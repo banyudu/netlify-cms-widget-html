@@ -42,5 +42,3 @@ export const parseHtml = memoizeOne((html, filter) => {
     urls: Array.from(allUrls)
   }
 })
-
-export const imageCache = {}
